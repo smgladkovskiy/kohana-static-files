@@ -1,8 +1,10 @@
 <?php defined('SYSPATH') or die('No direct script access.');
 
+$config = Kohana::config('staticfiles');
+
 Route::set(
    'static_files',
-   trim(Kohana::config('staticfiles.url'), '/').'/<file>',
+   trim($config->url, '/').'/<file>',
    array('file'=>'.*')
 )->defaults(array(
 	'controller' => 'staticfiles',
@@ -10,4 +12,4 @@ Route::set(
 	));
 
 require_once Kohana::find_file('vendor', 'jsmin');
-define('STATICFILES_URL', Kohana::config('staticfiles.host').Kohana::config('staticfiles.url'));
+define('STATICFILES_URL', $config->host . $config->url);

@@ -105,11 +105,6 @@ class Kohana_StaticCss extends StaticFile {
 	}
 
 	/**
-	 * Препарируем CSS
-	 * пожмем, исправим пути к картинкам
-	 */
-
-	/**
 	 * Prepares css file content
 	 *
 	 * If you want to move static files folder (ie images), you should use a placeholder instead of strict

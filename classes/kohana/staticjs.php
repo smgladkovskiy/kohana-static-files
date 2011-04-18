@@ -11,9 +11,9 @@ class Kohana_StaticJs extends StaticFile {
 	 * Class instance
 	 *
 	 * @static
-	 * @var StaticJs
+	 * @var array of StaticJs instances
 	 */
-	protected static $_instance;
+	protected static $_instance = array();
 
 	/**
 	 * Javascript files
@@ -44,16 +44,17 @@ class Kohana_StaticJs extends StaticFile {
 	 * Class instance initiating
 	 *
 	 * @static
+	 * @param string $type
 	 * @return StaticJs
 	 */
-	public static function instance()
+	public static function instance($type = 'default')
 	{
-		if ( ! is_object(self::$_instance))
+		if ( ! is_object(Arr::get(self::$_instance, $type, NULL)))
 		{
-			self::$_instance = new StaticJs();
+			self::$_instance[$type] = new StaticJs();
 		}
 
-		return self::$_instance;
+		return self::$_instance[$type];
 	}
 
 	/**

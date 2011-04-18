@@ -9,10 +9,11 @@ class Kohana_StaticCss extends StaticFile {
 
 	/**
 	 * Class instance
+	 *
 	 * @static
-	 * @var $instance
+	 * @var array of StaticCss instances
 	 */
-	protected static $_instance;
+	protected static $_instance = array();
 
 	/**
 	 * CSS files
@@ -32,16 +33,17 @@ class Kohana_StaticCss extends StaticFile {
 	 * Class instance initiating
 	 *
 	 * @static
+	 * @param string $type
 	 * @return StaticCss
 	 */
-	public static function instance()
+	public static function instance($type = 'default')
 	{
-		if ( ! is_object(self::$_instance))
+		if ( ! is_object(Arr::get(self::$_instance, $type, NULL)))
 		{
-			self::$_instance = new StaticCss();
+			self::$_instance[$type] = new StaticCss();
 		}
 
-		return self::$_instance;
+		return self::$_instance[$type];
 	}
 
 	/**

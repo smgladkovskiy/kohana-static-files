@@ -10,7 +10,7 @@
  * @package Kohana-static-files
  * @author Berdnikov Alexey <aberdnikov@gmail.com>
  */
-abstract class Controller_Staticfiles extends Controller {
+class Controller_Staticfiles extends Controller {
 
 	/**
 	 * Развертывание статики по мере необходимости

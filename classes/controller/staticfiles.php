@@ -17,9 +17,7 @@ class Controller_Staticfiles extends Controller {
 	 */
 	public function action_index($file)
 	{
-		$this->auto_render  = FALSE;
-		$info               = pathinfo($file);
-		$dir                = ('.' != $info['dirname']) ? $info['dirname'] . '/' : '';
+		$info = pathinfo($file);
 
 		if (($orig = self::static_original($file)))
 		{
@@ -30,16 +28,16 @@ class Controller_Staticfiles extends Controller {
 			copy($orig, $deploy);
 
 			//а пока отдадим файл руками
-			$this->request->check_cache(sha1($this->request->uri) . filemtime($orig));
-			$this->request->response                  = file_get_contents($orig);
-			$this->request->headers['Content-Type']   = File::mime_by_ext($info['extension']);
-			$this->request->headers['Content-Length'] = filesize($orig);
-			$this->request->headers['Last-Modified']  = date('r', filemtime($orig));
+			$this->request->response()
+				->check_cache(sha1($this->request->uri()) . filemtime($orig), $this->request)
+				->body(file_get_contents($orig))
+				->headers('last-modified', date('r', filemtime($orig)))
+				->headers('content-type', File::mime_by_ext($info['extension']));
 		}
 		else
 		{
 			// Return a 404 status
-			$this->request->status = 404;
+			$this->request->response()->status(404);
 		}
 	}
 

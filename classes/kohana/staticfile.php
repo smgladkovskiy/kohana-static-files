@@ -145,6 +145,21 @@ class Kohana_StaticFile {
 	}
 
 	/**
+	 * Clearing cache if expires its time to live
+	 *
+	 * @param  $build_name
+	 * @return void
+	 */
+	public function _cache_ttl_check($build_name)
+	{
+		if(file_exists($this->cache_file($build_name))
+		   AND (filemtime($this->cache_file($build_name)) + $this->_config->cache_reset_interval) < time())
+		{
+			$this->_cache_reset();
+		}
+	}
+
+	/**
 	 * Clearing cache folders
 	 *
 	 * @return void

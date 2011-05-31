@@ -201,12 +201,8 @@ class Kohana_StaticJs extends StaticFile {
             {
                 $build_name = $this->makeFileName($js, $condition, 'js');
 
-	            // Clearing cache if expire time is gone
-				if(file_exists($build_name)
-				   AND (filemtime($this->cache_file($build_name)) + $this->_config->cache_reset_interval) < time())
-				{
-					$this->_cache_reset();
-				}
+	            // Checking Cache file TTL
+	            $this->_cache_ttl_check($build_name);
 
                 if ( ! file_exists($this->cache_file($build_name)))
                 {

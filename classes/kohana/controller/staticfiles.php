@@ -81,4 +81,5 @@ abstract class Kohana_Controller_Staticfiles extends Controller {
 
 		return $deploy;
 	}
+
 } // Kohana_Controller_Staticfiles

@@ -1,5 +1,8 @@
 <?php defined('SYSPATH') or die('No direct script access.');
 
+/**
+ * @package Kohana-static-files
+ */
 class File extends Kohana_File {
 
 	/**

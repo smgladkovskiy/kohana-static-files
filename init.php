@@ -1,5 +1,9 @@
 <?php defined('SYSPATH') or die('No direct script access.');
 
+/**
+ * @package Kohana-static-files
+ */
+
 $config = Kohana::config('staticfiles');
 
 Route::set(
@@ -9,7 +13,9 @@ Route::set(
 )->defaults(array(
 	'controller' => 'staticfiles',
 	'action' => 'index'
-	));
+	)
+);
 
 require_once Kohana::find_file('vendor', 'jsmin');
+
 define('STATICFILES_URL', $config->host . $config->url);

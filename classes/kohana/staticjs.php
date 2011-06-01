@@ -17,20 +17,6 @@ class Kohana_StaticJs extends StaticFile {
 	protected static $_instances = array();
 
 	/**
-	 * Javascript links and files container
-	 *
-	 * @var array
-	 */
-	protected $_js = array();
-
-	/**
-	 * StaticFiles config object
-	 *
-	 * @var Kohana_Config
-	 */
-	protected $_config;
-
-	/**
 	 * Class instance initiating
 	 *
 	 * @static
@@ -63,34 +49,9 @@ class Kohana_StaticJs extends StaticFile {
 	 */
 	public function add($js, $condition = NULL, $place = 'docroot', $id = NULL)
 	{
-		$js = trim($js, '/');
-
-		switch($place)
-		{
-			case 'docroot':
-				$this->_add_docroot_js($js, $condition);
-				break;
-			case 'modpath':
-				$this->_add_modpath_js($js, $condition);
-				break;
-			case 'inline':
-				$this->_add_inline_js($js, $condition, $id);
-				break;
-			case 'cdn':
-//				$this->_add_library($js,);
-		}
+		$this->_add('js', $js, $condition, $place, $id);
 
 		return $this;
-	}
-
-	/**
-	 * Render all javascript
-	 *
-	 * @return string
-	 */
-	public function get_all()
-	{
-		return $this->get('docroot') . "\n" . $this->get('modpath') . "\n" . $this->get('inline');
 	}
 
 	/**
@@ -124,7 +85,7 @@ class Kohana_StaticJs extends StaticFile {
 				}
 			}
 
-			$js_code = $this->prepare_js_anchors($js_code);
+			$js_code = $this->_prepare($js_code, 'js');
 
 			if ( ! $this->_config->js['build'])
 				return '<script language="JavaScript" type="text/javascript">' . trim($js_code) . '</script>';
@@ -136,16 +97,9 @@ class Kohana_StaticJs extends StaticFile {
 		{
 			foreach ($this->_js[$place] as $condition => $js_array)
 			{
-				if($place !== 'inline')
+				foreach($js_array as $js => $condition)
 				{
-					foreach($js_array as $js => $condition)
-					{
-						$js_code .= $this->get_link($js, $condition) . "\n";
-					}
-				}
-				else
-				{
-					continue;
+					$js_code .= $this->_get_link('js', $js, $condition) . "\n";
 				}
 			}
 		}
@@ -154,13 +108,13 @@ class Kohana_StaticJs extends StaticFile {
 			if($place == 'inline')
 			{
 				// If one file building of inline scripts is needed
-				$build_name = $this->make_file_name($this->_js['inline'], 'inline', 'js');
+				$build_name = $this->_make_file_name($this->_js['inline'], 'inline', 'js');
 				if ( ! file_exists($this->cache_file($build_name)))
 				{
 					$this->save($this->cache_file($build_name), $js_code);
 				}
 
-				$js_code = $this->get_link($this->cache_url($build_name));
+				$js_code = $this->_get_link('js', $this->cache_url($build_name));
 			}
 			else
 			{
@@ -175,7 +129,7 @@ class Kohana_StaticJs extends StaticFile {
 
 				foreach ($build as $condition => $js)
 				{
-					$build_name = $this->make_file_name($js, $condition, 'js');
+					$build_name = $this->_make_file_name($js, $condition, 'js');
 
 					// Checking Cache file TTL
 					$this->_cache_ttl_check($build_name);
@@ -207,89 +161,13 @@ class Kohana_StaticJs extends StaticFile {
 						$this->save($this->cache_file($build_name), $build_content);
 					}
 
-					$js_code .= $this->get_link($this->cache_url($build_name), $condition);
+					$js_code .= $this->_get_link('js', $this->cache_url($build_name), $condition);
 				}
 			}
 		}
 
 		Profiler::stop($benchmark);
 		return $js_code;
-	}
-
-	/**
-	 * Adds js files that can be found in js directory in DOCROOT
-	 *
-	 * @param  string      $js
-	 * @param  string|null $condition
-	 * @return void
-	 */
-	protected function _add_docroot_js($js, $condition = NULL)
-	{
-		$this->_js['docroot'][$condition][$js] = $condition;
-	}
-
-	/**
-	 * Adds js files that can be found in js directory in MODPATH
-	 *
-	 * @param  string      $js
-	 * @param  string|null $condition
-	 * @return void
-	 */
-	protected function _add_modpath_js($js, $condition = NULL)
-	{
-		$js = $this->_config->temp_docroot_path . $js;
-		$this->_js['modpath'][$condition][$js] = $condition;
-	}
-
-	/**
-	 * Adds inline js
-	 *
-	 * @param  $js
-	 * @param null $condition
-	 * @param null $id
-	 * @return void
-	 */
-	protected function _add_inline_js($js, $condition = NULL, $id = NULL)
-	{
-		if ($id !== NULL)
-		{
-			$this->_js['inline'][$condition][$id] = $js;
-		}
-		else
-		{
-			$this->_js['inline'][$condition][] = $js;
-		}
-	}
-
-	/**
-	 * Gets html code of the script loading
-	 *
-	 * @param  string $js
-	 * @param  string|null $condition
-	 * @return string
-	 */
-	protected function get_link($js, $condition = NULL)
-	{
-		$js = trim($js, '/');
-		if (mb_substr($js, 0, 4) != 'http')
-		{
-			$js = ($this->_config->host == '/') ? $js : $this->_config->host . $js;
-		}
-
-		return ($condition ? '<!--[if ' . $condition . ']>' : '')
-		     . HTML::script($js)
-		     . ($condition ? '<![endif]-->' : '') . "\n";
-	}
-
-	/**
-	 * Prepares javascript code
-	 *
-	 * @param  string $js_code
-	 * @return mixed
-	 */
-	protected function prepare_js_anchors($js_code)
-	{
-		return str_replace('{staticfiles_url}', STATICFILES_URL, $js_code);
 	}
 
 	/**

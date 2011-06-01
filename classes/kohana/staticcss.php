@@ -9,26 +9,12 @@
 class Kohana_StaticCss extends StaticFile {
 
 	/**
-	 * Class instance
+	 * Class instances
 	 *
 	 * @static
 	 * @var array of StaticCss instances
 	 */
-	protected static $_instance = array();
-
-	/**
-	 * CSS files
-	 *
-	 * @var array
-	 */
-	protected $_css = array();
-
-	/**
-	 * inline CSS
-	 *
-	 * @var string
-	 */
-	protected $_css_inline = array();
+	protected static $_instances = array();
 
 	/**
 	 * Class instance initiating
@@ -39,51 +25,19 @@ class Kohana_StaticCss extends StaticFile {
 	 */
 	public static function instance($type = 'default')
 	{
-		if ( ! is_object(Arr::get(self::$_instance, $type, NULL)))
+		if ( ! is_object(Arr::get(self::$_instances, $type, NULL)))
 		{
-			self::$_instance[$type] = new StaticCss();
+			self::$_instances[$type] = new StaticCss();
 		}
 
-		return self::$_instance[$type];
+		return self::$_instances[$type];
 	}
 
-	/**
-	 * Adds real existing file (in docroot)
-	 *
-	 * @param  string      $css_file
-	 * @param  string|null $condition
-	 * @return Kohana_StaticCss
-	 */
-	public function addCss($css_file, $condition = NULL)
+	public function add($css, $condition = NULL, $place = 'docroot')
 	{
-		$this->_css[$condition][$css_file] = $condition;
+		$this->_add('css', $css, $condition, $place);
+
 		return $this;
-	}
-
-	/**
-	 * Adds external server css
-	 *
-	 * @param  string      $css_file
-	 * @param  string|null $condition
-	 * @return Kohana_StaticCss
-	 */
-	public function addCssStatic($css_file, $condition = NULL)
-	{
-		$css_file = $this->_config->url . $css_file;
-		$this->_css[$condition][$css_file] = $condition;
-		return $this;
-	}
-
-	/**
-	 * Adds inline style
-	 *
-	 * @param  string  $css_inline
-	 * @return Kohana_StaticCss
-	 */
-	public function addCssInline($css_inline)
-	{
-		$css_inline = str_replace('{staticfiles_url}', STATICFILES_URL, $css_inline);
-		$this->_css_inline[$css_inline] = $css_inline;
 	}
 
 	/**
@@ -107,110 +61,115 @@ class Kohana_StaticCss extends StaticFile {
 		return $v;
 	}
 
-	/**
-	 * Prepares css file content
-	 *
-	 * If you want to move static files folder (ie images), you should use a placeholder instead of strict
-	 * folder defining.
-	 * @examle a:hover{background:url({staticfiles_url}dir/file.jpeg) no-repeat left top;}
-	 *
-	 * @param  string $style
-	 * @return string
-	 */
-	protected function prepareCss($style)
-	{
-		$style = str_replace('{staticfiles_url}', STATICFILES_URL, $style);
-
-		if ($this->_config->css['min'])
-		{
-			$style = $this->minify($style);
-		}
-
-		return trim($style);
-	}
-
-	/**
-	 * Gets html code of the css loading
-	 *
-	 * @param  string      $css
-	 * @param  string|null $condition
-	 * @return string
-	 */
-	public function getLink($css, $condition = NULL)
-	{
-		$css = trim($css, '/');
-		if (mb_substr($css, 0, 4) != 'http')
-		{
-			$css = ($this->_config->host == '/') ? $css : $this->_config->host . $css;
-		}
-
-		return ''
-		. ($condition ? '<!--[if ' . $condition . ']>' : '')
-		. HTML::style($css, array('media' => 'all'))
-		. ($condition ? '<![endif]-->' : '');
-	}
-
-	/**
-	 * Gets external css
-	 *
-	 * @return null|string
-	 */
-	public function getCss()
+	public function get($place = 'docroot')
 	{
 		$benchmark = Profiler::start(__CLASS__, __FUNCTION__);
 
-		if ( ! count($this->_css))
+		if ( ! isset($this->_css[$place]) OR ! count($this->_css[$place]))
 		{
 			Profiler::stop($benchmark);
 			return NULL;
 		}
 
 		$css_code = '';
+		if($place == 'inline')
+		{
+			$css_inline = implode("\n", $this->_css_inline);
+
+			if ($this->_config->css['min'])
+			{
+				$css_inline = $this->minify($css_inline);
+			}
+
+			foreach ($this->_css['inline'] as $condition => $css_array)
+			{
+				$css_inline = implode("\n", $css_array);
+				if ($this->_config->css['min'])
+				{
+					$css_inline = $this->minify($css_inline);
+				}
+				$css_code .= $css_inline;
+			}
+
+			$css_code = $this->_prepare($css_code, 'css');
+
+			if ( ! $this->_config->css['build'])
+				return '<style type="text/css">' . trim($css_code) . '</style>';
+		}
+
 		// Not need to build one js file
 		if ( ! $this->_config->css['build'])
 		{
-			foreach ($this->_css as $condition => $css_array)
+			foreach ($this->_css[$place] as $condition => $css_array)
 			{
 				foreach($css_array as $css => $condition)
 				{
-					$css_code .= $this->getLink($css, $condition);
+					$css_code .= $this->_get_link('css', $css, $condition) . "\n";
 				}
 			}
 		}
 		else
 		{
-			$build = array();
-			$css_code = '';
-			foreach ($this->_css as $condition => $css_array)
+			if($place === 'inline')
 			{
-				foreach($css_array as $css => $condition)
-				{
-					$build[$condition][] = $css;
-				}
-			}
-
-			foreach ($build as $condition => $css)
-			{
-				$build_name = $this->makeFileName($css, $condition, 'css');
-
-				// Checking Cache file TTL
-	            $this->_cache_ttl_check($build_name);
+				$build_name = $this->_make_file_name($this->_css['inline'], 'inline', 'css');
 
 				if ( ! file_exists($this->cache_file($build_name)))
 				{
-					// first time building
-					$build = '';
-					foreach ($css as $url)
-					{
-						$_css = $this->getSource($url);
-						$_css = $this->prepareCss($_css);
-						$build .= $_css;
-					}
-
-					$this->save($this->cache_file($build_name), $build);
+					$this->save($this->cache_file($build_name), $css_code);
 				}
 
-				$css_code .= $this->getLink($this->cache_url($build_name), $condition);
+				$css_code = $this->_get_link('css', $this->cache_url($build_name));
+			}
+			else
+			{
+				$build = array();
+				$css_code = '';
+				foreach ($this->_css[$place] as $condition => $css_array)
+				{
+					foreach($css_array as $css => $condition)
+					{
+						$build[$condition][] = $css;
+					}
+				}
+
+				foreach ($build as $condition => $css)
+				{
+					$build_name = $this->_make_file_name($css, $condition, 'css');
+
+					// Checking Cache file TTL
+					$this->_cache_ttl_check($build_name);
+
+					if ( ! file_exists($this->cache_file($build_name)))
+					{
+						$build_content = '';
+						if($place === 'inline')
+						{
+							$build_content .= $css_code;
+						}
+						else
+						{
+							// first time building
+							foreach ($css as $url)
+							{
+								$_css = $this->get_source($url, $place);
+								$_css = $this->_prepare($_css, 'css');
+
+								// look if file name has 'min' suffix to avoid extra minification
+								if ($this->_config->css['min'] AND (! mb_strpos($url, '.min.') AND ! mb_strpos($url, '.pack.')))
+								{
+									$_css = $this->minify($_css);
+								}
+
+								$build_content .= $_css;
+							}
+						}
+
+						$this->save($this->cache_file($build_name), $build_content);
+					}
+
+					$css_code .= $this->_get_link('css', $this->cache_url($build_name), $condition);
+				}
 			}
 		}
 
@@ -218,48 +177,4 @@ class Kohana_StaticCss extends StaticFile {
 		return $css_code;
 	}
 
-	/**
-	 * Gets inline styles
-	 *
-	 * @return null|string
-	 */
-	public function getCssInline()
-	{
-		$benchmark = Profiler::start(__CLASS__, __FUNCTION__);
-
-		if ( ! count($this->_css_inline))
-		{
-			Profiler::stop($benchmark);
-			return NULL;
-		}
-
-		$css_inline = implode("\n", $this->_css_inline);
-
-		if ($this->_config->css['min'])
-		{
-			$css_inline = $this->minify($css_inline);
-		}
-
-		if ($this->_config->css['build'])
-		{
-			$build_name = $this->makeFileName($css_inline, 'inline', 'css');
-
-			if ( ! file_exists($this->cache_file($build_name)))
-			{
-				$this->save($this->cache_file($build_name), $css_inline);
-			}
-		}
-		Profiler::stop($benchmark);
-		return $this->getLink($this->cache_url($build_name));
-	}
-
-	/**
-	 * Gets all css and inline styles that was loaded earlier
-	 * @return string
-	 */
-	public function getCssAll()
-	{
-		return $this->getCss() . "\n" . $this->getCssInline();
-	}
-
-} // END Kohana_StaticCss
+} // End Kohana_StaticCss

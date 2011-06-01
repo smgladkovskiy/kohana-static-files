@@ -13,7 +13,7 @@
 
 * Adding virtual stylesheet file (will be searching in APPPATH.'static-files'.$file and MODPATH.$module.'static-files'.$file)
 
-        StaticCss::instance()->add('style.css', 'modpath');
+        StaticCss::instance()->add('style.css', NULL, 'modpath');
 
 * Inline styles adding
 

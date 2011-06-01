@@ -17,7 +17,7 @@
 
 * Inline styles adding
 
-        StaticCss::instance()->add('.a:hover{color:red}', 'inline');
+        StaticCss::instance()->add('.a:hover{color:red}', NULL, 'inline');
 
 * Adding real existing files of scripts on server or other host
 
@@ -25,11 +25,11 @@
 
 * Adding virtual javascript file
 
-        StaticJs::instance()->add('jquery/jquery-1.4.3.min.js', 'modpath');
+        StaticJs::instance()->add('jquery/jquery-1.4.3.min.js', NULL, 'modpath');
 
 * Inline scripts adding
 
-        StaticJs::instance()->add('alert(\'test!\');', 'inline');
+        StaticJs::instance()->add('alert(\'test!\');', NULL, 'inline');
 
 ## To load all added javascripts or scripts
 

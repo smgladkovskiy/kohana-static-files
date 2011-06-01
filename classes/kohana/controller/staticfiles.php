@@ -1,11 +1,7 @@
 <?php defined('SYSPATH') or die('No direct access allowed.');
 
 /**
- * Суть контроллера: иметь возможность создания компактных модулей, в которых бы
- * можно было хранить и css, и js, и картинки выше DOCUMENT_ROOT, чтобы
- * при развертывании проекта не забывать копировать их куда надо
- * Просто бросаем модуль в modules, прописываем его в bootstrapper
- * Затем текущий контроллер, при первом же запросе
+ * Static Files rendering controller
  *
  * @package Kohana-static-files
  * @author  Berdnikov Alexey <aberdnikov@gmail.com>
@@ -28,11 +24,11 @@ abstract class Kohana_Controller_Staticfiles extends Controller {
 		{
 			$deploy = self::_static_deploy($file);
 
-			//производим deploy статического файла, в следующий раз его будет
-			//отдавать сразу веб-сервер без запуска PHP
+			// static file deploying
+			// Next request will take file rom the deploying place, not via PHP
 			copy($orig, $deploy);
 
-			//а пока отдадим файл руками
+			// Return file to a browser
 			$this->request->response()
 				->check_cache(sha1($this->request->uri()) . filemtime($orig), $this->request)
 				->body(file_get_contents($orig))
@@ -83,4 +79,4 @@ abstract class Kohana_Controller_Staticfiles extends Controller {
 		return $deploy;
 	}
 
-} // Kohana_Controller_Staticfiles
+} // End Kohana_Controller_Staticfiles

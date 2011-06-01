@@ -368,4 +368,4 @@ class Kohana_StaticFile {
 		}
 	}
 
-} // END Kohana_StaticFile
+} // End Kohana_StaticFile

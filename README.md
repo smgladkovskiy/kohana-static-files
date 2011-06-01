@@ -21,7 +21,7 @@
 
 * Adding real existing files of scripts on server or other host
 
-        StaticJs::instance()->addJs('js/pirobox.js');
+        StaticJs::instance()->add('js/pirobox.js');
 
 * Adding virtual javascript file
 

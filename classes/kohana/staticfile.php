@@ -2,7 +2,8 @@
 
 /**
  * @package Kohana-static-files
- * @author Berdnikov Alexey <aberdnikov@gmail.com>
+ * @author  Berdnikov Alexey <aberdnikov@gmail.com>
+ * @author  Sergei Gladkovskiy <smgladkovskiy@gmail.com>
  */
 class Kohana_StaticFile {
 
@@ -43,6 +44,19 @@ class Kohana_StaticFile {
 		fwrite($f, $data);
 
 		fclose($f);
+	}
+
+	public function get_source($url, $place = 'docroot')
+	{
+		$file_path = NULL;
+		switch($place)
+		{
+			case 'docroot':
+				$file_path = DOCROOT . preg_replace('/\//', DIRECTORY_SEPARATOR, $url);
+				break;
+		}
+
+		return file_get_contents($file_path);
 	}
 
 	/**
@@ -102,7 +116,9 @@ class Kohana_StaticFile {
 	 */
 	public function cache_file($file_name)
 	{
-		$cache_file = $this->_config->path . substr($this->_config->cache, 1) . $file_name;
+		$cache_file = $this->_config->path
+		              . preg_replace('/\//', DIRECTORY_SEPARATOR, $this->_config->cache)
+		              . preg_replace('/\//', DIRECTORY_SEPARATOR, $file_name);
 
 		if ( ! file_exists(dirname($cache_file)))
 		{
@@ -131,6 +147,19 @@ class Kohana_StaticFile {
 	 * @param  string      $type (css|js)
 	 * @return string
 	 */
+	protected function make_file_name(array $file_array, $condition_prefix = NULL, $type)
+	{
+		$condition_prefix = strtolower(preg_replace('/[^A-Za-z0-9_\-]/', '-', $condition_prefix));
+		$condition_prefix = $condition_prefix ? ($condition_prefix . '/') : '';
+		$file_name        = md5($this->_config->host . serialize($file_array));
+
+		return $type . '/'
+			 . $condition_prefix
+			 . substr($file_name, 0, 1) . '/'
+			 . substr($file_name, 1, 1) . '/'
+			 . $file_name . '.' . $type;
+	}
+
 	protected function makeFileName(array $file_array, $condition_prefix = NULL, $type)
 	{
 		$condition_prefix = strtolower(preg_replace('/[^A-Za-z0-9_\-]/', '-', $condition_prefix));

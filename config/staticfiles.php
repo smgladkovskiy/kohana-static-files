@@ -25,13 +25,16 @@ return array(
     'path' => realpath(DOCROOT) . DIRECTORY_SEPARATOR,
 
     // Path to copy static files that are not build in one file
-    'url' => '/media/static/',
+	'temp_docroot_path' => 'media/static/',
+    'url' => 'media/static/',
 
     // Path to styles and scripts builds
-    'cache' => '/media/cache/',
+    'cache' => 'media/cache/',
 
     // Host address (base or CDN)
     'host' => URL::base(FALSE, TRUE),
+    'base' => URL::base(FALSE, TRUE),
+    'cdn' => 'http://someCDN.com/',
 
 	// Cache reset interval
 	'cache_reset_interval' => 12*60*60, // 12 hours

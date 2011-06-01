@@ -3,7 +3,8 @@
 /**
  * @uses JSMin
  * @package Kohana-static-files
- * @author Berdnikov Alexey <aberdnikov@gmail.com>
+ * @author  Berdnikov Alexey <aberdnikov@gmail.com>
+ * @author  Sergei Gladkovskiy <smgladkovskiy@gmail.com>
  */
 class Kohana_StaticCss extends StaticFile {
 

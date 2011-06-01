@@ -8,8 +8,9 @@
  * Затем текущий контроллер, при первом же запросе
  *
  * @package Kohana-static-files
- * @author Berdnikov Alexey <aberdnikov@gmail.com>
- * @author Brotkin Ivan (BIakaVeron) <BIakaVeron@gmail.com>
+ * @author  Berdnikov Alexey <aberdnikov@gmail.com>
+ * @author  Brotkin Ivan (BIakaVeron) <BIakaVeron@gmail.com>
+ * @author  Sergei Gladkovskiy <smgladkovskiy@gmail.com>
  */
 abstract class Kohana_Controller_Staticfiles extends Controller {
 

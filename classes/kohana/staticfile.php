@@ -165,7 +165,7 @@ class Kohana_StaticFile {
 	 */
 	public function get_all()
 	{
-		return $this->get('docroot') . "\n" . $this->get('modpath') . "\n" . $this->get('inline');
+		return $this->load_library() . "\n" . $this->get('docroot') . "\n" . $this->get('modpath') . "\n" . $this->get('inline');
 	}
 
 	/**
@@ -200,7 +200,7 @@ class Kohana_StaticFile {
 				$this->_add_as_inline($type, $href, $condition, $id);
 				break;
 			case 'cdn':
-//				$this->_add_library($js,);
+				$this->_add_as_cdn($type, $href);
 				break;
 		}
 	}
@@ -258,6 +258,12 @@ class Kohana_StaticFile {
 		{
 			$this->{$container}['inline'][$condition][] = $code;
 		}
+	}
+
+	protected function _add_as_cdn($type, $href)
+	{
+		$container = '_'.$type;
+		$this->{$container}['cdn'][] = $href;
 	}
 
 	/**

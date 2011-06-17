@@ -172,14 +172,16 @@ class Kohana_StaticJs extends StaticFile {
 
 	/**
 	 * Loads library from CDN
-	 *
-	 * @param  $lib_name
-	 * @param  $version
-	 * @return void
 	 */
-	public function load_library($lib_name, $version)
+	public function load_library()
 	{
-		$this->add('https://ajax.googleapis.com/ajax/libs/'.$lib_name.'/'.$version.'.min.js', NULL, 'cdn');
+		$anchors = NULL;
+		foreach(Arr::get($this->_js, 'cdn', array()) as $href)
+		{
+			$anchors = HTML::script($href);
+		}
+
+		return $anchors;
 	}
 
 } // End Kohana_StaticJs

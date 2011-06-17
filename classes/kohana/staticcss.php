@@ -177,4 +177,19 @@ class Kohana_StaticCss extends StaticFile {
 		return $css_code;
 	}
 
+	/**
+	 * Loads library from CDN
+	 */
+	public function load_library()
+	{
+		$anchors = NULL;
+
+		foreach(Arr::get($this->_css, 'cdn', array()) as $href)
+		{
+			$anchors = HTML::script($href);
+		}
+
+		return $anchors;
+	}
+
 } // End Kohana_StaticCss

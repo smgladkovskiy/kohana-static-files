@@ -149,7 +149,10 @@ class Kohana_StaticJs extends StaticFile {
 								$_js = $this->get_source($url, $place);
 
 								// look if file name has 'min' suffix to avoid extra minification
-								if ($this->_config->js['min'] AND (! mb_strpos($url, '.min.') AND ! mb_strpos($url, '.pack.')))
+								if ($this->_config->js['min'] AND
+								    (! mb_strpos($url, '.min.') AND
+								     ! mb_strpos($url, '.pack.') AND
+								     ! mb_strpos($url, '.packed.')))
 								{
 									$_js = JSMin::minify($_js);
 								}

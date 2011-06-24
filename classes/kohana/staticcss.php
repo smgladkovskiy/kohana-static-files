@@ -156,7 +156,10 @@ class Kohana_StaticCss extends StaticFile {
 								$_css = $this->_prepare($_css, 'css');
 
 								// look if file name has 'min' suffix to avoid extra minification
-								if ($this->_config->css['min'] AND (! mb_strpos($url, '.min.') AND ! mb_strpos($url, '.pack.')))
+								if ($this->_config->css['min'] AND
+								    (! mb_strpos($url, '.min.') AND
+								     ! mb_strpos($url, '.pack.') AND
+								     ! mb_strpos($url, '.packed.')))
 								{
 									$_css = $this->minify($_css);
 								}

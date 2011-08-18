@@ -19,14 +19,22 @@ class Kohana_StaticFile {
 	 *
 	 * @var array
 	 */
-	protected $_js = array();
+	protected $_js = array(
+		'docroot' => array(),
+		'modpath' => array(),
+		'inline' => array(),
+	);
 
 	/**
 	 * CSS links and files container
 	 *
 	 * @var array
 	 */
-	protected $_css = array();
+	protected $_css = array(
+		'docroot' => array(),
+		'modpath' => array(),
+		'inline' => array(),
+	);
 
 	/**
 	 * Class constructor
@@ -171,8 +179,8 @@ class Kohana_StaticFile {
 	protected function _add_as_docroot($type, $href, $condition = NULL)
 	{
 		$container = '_'.$type;
-
-		$this->{$container}['docroot'][$condition][$href] = $condition;
+		if( ! in_array($href, array_values(Arr::get($this->{$container}['docroot'], $condition, array()))))
+			$this->{$container}['docroot'][$condition][] = $href;
 	}
 
 	/**
@@ -187,7 +195,7 @@ class Kohana_StaticFile {
 	{
 		$href = $this->_config->temp_docroot_path . $href;
 		$container = '_'.$type;
-		$this->{$container}['modpath'][$condition][$href] = $condition;
+		$this->{$container}['modpath'][$condition][] = array($href => $condition);
 	}
 
 	/**

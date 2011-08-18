@@ -100,9 +100,9 @@ class Kohana_StaticCss extends StaticFile {
 		// Not need to build one js file
 		if ( ! $this->_config->css['build'])
 		{
-			foreach ($this->_css[$place] as $condition => $css_array)
+			foreach($this->_css[$place] as $condition => $css_array)
 			{
-				foreach($css_array as $css => $condition)
+				foreach($css_array as $css)
 				{
 					$css_code .= $this->_get_link('css', $css, $condition) . "\n";
 				}
@@ -127,7 +127,7 @@ class Kohana_StaticCss extends StaticFile {
 				$css_code = '';
 				foreach ($this->_css[$place] as $condition => $css_array)
 				{
-					foreach($css_array as $css => $condition)
+					foreach($css_array as $css)
 					{
 						$build[$condition][] = $css;
 					}
@@ -182,6 +182,8 @@ class Kohana_StaticCss extends StaticFile {
 
 	/**
 	 * Loads library from CDN
+	 *
+	 * @return null|string
 	 */
 	public function load_library()
 	{

@@ -75,7 +75,7 @@ class Kohana_StaticJs extends StaticFile {
 		{
 			foreach ($this->_js['inline'] as $condition => $js_array)
 			{
-				foreach ($js_array as $id => $js)
+				foreach ($js_array as $js)
 				{
 					if ($this->_config->js['min'])
 					{
@@ -97,7 +97,7 @@ class Kohana_StaticJs extends StaticFile {
 		{
 			foreach ($this->_js[$place] as $condition => $js_array)
 			{
-				foreach($js_array as $js => $condition)
+				foreach($js_array as $js)
 				{
 					$js_code .= $this->_get_link('js', $js, $condition) . "\n";
 				}
@@ -121,7 +121,7 @@ class Kohana_StaticJs extends StaticFile {
 				$build = array();
 				foreach ($this->_js[$place] as $condition => $js_array)
 				{
-					foreach($js_array as $js => $condition)
+					foreach($js_array as $js)
 					{
 						$build[$condition][] = $js;
 					}

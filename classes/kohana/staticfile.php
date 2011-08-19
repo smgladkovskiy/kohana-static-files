@@ -128,7 +128,7 @@ class Kohana_StaticFile {
 	 */
 	public function get_all()
 	{
-		return $this->load_library() . "\n" . $this->get('docroot') . "\n" . $this->get('modpath') . "\n" . $this->get('inline');
+		return $this->load_library() . "\n" . $this->get('modpath') . "\n" .$this->get('docroot') . "\n" .  $this->get('inline');
 	}
 
 	/**
@@ -193,9 +193,8 @@ class Kohana_StaticFile {
 	 */
 	protected function _add_as_modpath($type, $href, $condition = NULL)
 	{
-		$href = $this->_config->temp_docroot_path . $href;
 		$container = '_'.$type;
-		$this->{$container}['modpath'][$condition][] = array($href => $condition);
+		$this->{$container}['modpath'][$condition][] = $href;
 	}
 
 	/**
@@ -334,6 +333,33 @@ class Kohana_StaticFile {
 		{
 			$path = DOCROOT . trim(preg_replace('/\//', DIRECTORY_SEPARATOR, $path), '\\');
 			File::rmdir($path, TRUE);
+		}
+	}
+
+	public function _move_to_docroot($files)
+	{
+		$docroot_tmp_path = DOCROOT.$this->_config->temp_docroot_path;
+
+		if( ! file_exists($docroot_tmp_path))
+			mkdir($docroot_tmp_path, NULL, TRUE);
+
+		foreach($files as $files_array)
+		{
+			foreach($files_array as $file)
+			{
+				$file = pathinfo($file);
+				$file_path = Kohana::find_file('media', $file['dirname'].DIRECTORY_SEPARATOR.$file['filename'], $file['extension']);
+				$docroot_tmp_path_file = $docroot_tmp_path.DIRECTORY_SEPARATOR.$file['dirname'].DIRECTORY_SEPARATOR;
+				$docroot_file_path = $docroot_tmp_path_file.$file['basename'];
+
+				if( ! file_exists($docroot_tmp_path_file))
+					mkdir($docroot_tmp_path_file, NULL, TRUE);
+
+				if($file_path AND ( ! file_exists($docroot_file_path) OR filectime($docroot_file_path) > filectime($file_path)))
+				{
+					copy($file_path, $docroot_file_path);
+				}
+			}
 		}
 	}
 

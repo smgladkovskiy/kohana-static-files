@@ -91,6 +91,11 @@ class Kohana_StaticJs extends StaticFile {
 				return '<script language="JavaScript" type="text/javascript">' . trim($js_code) . '</script>';
 		}
 
+		if($place == 'modpath')
+		{
+			$this->_move_to_docroot($this->_js['modpath']);
+		}
+
 
 		// Not need to build one js file
 		if ( ! $this->_config->js['build'])
@@ -99,6 +104,10 @@ class Kohana_StaticJs extends StaticFile {
 			{
 				foreach($js_array as $js)
 				{
+					if($place == 'modpath')
+					{
+						$js = $this->_config->temp_docroot_path.$js;
+					}
 					$js_code .= $this->_get_link('js', $js, $condition) . "\n";
 				}
 			}

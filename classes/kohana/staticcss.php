@@ -33,10 +33,57 @@ class Kohana_StaticCss extends StaticFile {
 		return self::$_instances[$type];
 	}
 
-	public function add($css, $condition = NULL, $place = 'docroot')
+	/**
+	 * Adding script from a docroot
+	 *
+	 * @param  string      $href
+	 * @param  string|null $condition
+	 * @return StaticJs
+	 */
+	public function add($href, $condition = NULL)
 	{
-		$this->_add('css', $css, $condition, $place);
+		$this->_add_as_docroot('css', $href, $condition);
 
+		return $this;
+	}
+
+	/**
+	 * Adding inline script
+	 *
+	 * @param  string      $js
+	 * @param  string|null $condition
+	 * @param  string|null $id
+	 * @return StaticJs
+	 */
+	public function add_inline($js, $condition = NULL, $id = NULL)
+	{
+		$this->_add_as_inline('css', $js, $condition, $id);
+		return $this;
+	}
+
+	/**
+	 * Adding script from a modules path (media folder in the module)
+	 *
+	 * @param  string      $href
+	 * @param  string|null $condition
+	 * @return StaticJs
+	 */
+	public function add_modpath($href, $condition = NULL)
+	{
+		$this->_add_as_modpath('css', $href, $condition);
+		return $this;
+	}
+
+	/**
+	 * Adding script from a CDN
+	 *
+	 * @param  string      $href
+	 * @param  string|null $condition
+	 * @return StaticJs
+	 */
+	public function add_cdn($href, $condition = NULL)
+	{
+		$this->_add_as_cdn('css', $href, $condition);
 		return $this;
 	}
 
@@ -61,140 +108,109 @@ class Kohana_StaticCss extends StaticFile {
 		return $v;
 	}
 
-	public function get($place = 'docroot')
+	public function get_all()
 	{
-		$benchmark = Profiler::start(__CLASS__, __FUNCTION__);
+		$benchmark = $this->_start_benchmark('css');
+		$css_links = NULL;
+		$inline_css = NULL;
+		$build = array();
 
-		if ( ! isset($this->_css[$place]) OR ! count($this->_css[$place]))
+		foreach($this->_css as $condition => $css_arr)
 		{
-			Profiler::stop($benchmark);
-			return NULL;
-		}
-
-		$css_code = '';
-		if($place == 'inline')
-		{
-			$css_inline = implode("\n", $this->_css_inline);
-
-			if ($this->_config->css['min'])
+			$css_arr = Arr::flatten($css_arr);
+			foreach($css_arr as $resource => $destination)
 			{
-				$css_inline = $this->minify($css_inline);
-			}
-
-			foreach ($this->_css['inline'] as $condition => $css_array)
-			{
-				$css_inline = implode("\n", $css_array);
-				if ($this->_config->css['min'])
+				switch($destination)
 				{
-					$css_inline = $this->minify($css_inline);
-				}
-				$css_code .= $css_inline;
-			}
-
-			$css_code = $this->_prepare($css_code, 'css');
-
-			if ( ! $this->_config->css['build'])
-				return '<style type="text/css">' . trim($css_code) . '</style>';
-		}
-
-		// Not need to build one js file
-		if ( ! $this->_config->css['build'])
-		{
-			foreach($this->_css[$place] as $condition => $css_array)
-			{
-				foreach($css_array as $css)
-				{
-					$css_code .= $this->_get_link('css', $css, $condition) . "\n";
-				}
-			}
-		}
-		else
-		{
-			if($place === 'inline')
-			{
-				$build_name = $this->_make_file_name($this->_css['inline'], 'inline', 'css');
-
-				if ( ! file_exists($this->cache_file($build_name)))
-				{
-					$this->save($this->cache_file($build_name), $css_code);
-				}
-
-				$css_code = $this->_get_link('css', $this->cache_url($build_name));
-			}
-			else
-			{
-				$build = array();
-				$css_code = '';
-				foreach ($this->_css[$place] as $condition => $css_array)
-				{
-					foreach($css_array as $css)
-					{
-						$build[$condition][] = $css;
-					}
-				}
-
-				foreach ($build as $condition => $css)
-				{
-					$build_name = $this->_make_file_name($css, $condition, 'css');
-
-					// Checking Cache file TTL
-					$this->_cache_ttl_check($build_name);
-
-					if ( ! file_exists($this->cache_file($build_name)))
-					{
-						$build_content = '';
-						if($place === 'inline')
+					case 'inline':
+						$css_link_arr = NULL;
+						if ($this->_config->css['min'])
 						{
-							$build_content .= $css_code;
+							$css_link_arr =  $this->minify($resource);
+						}
+						$inline_css .= $css_link_arr;
+						break;
+					case 'docroot':
+					case 'modpath':
+					case 'cdn':
+						if($destination == 'modpath')
+						{
+							$this->_move_to_docroot_cache($resource);
+							$resource = $this->_config->temp_docroot_path.$resource;
+						}
+
+						if ( ! $this->_config->css['build'])
+						{
+							$css_links .= $this->_get_link('css', $resource, $condition) . "\n";
 						}
 						else
 						{
-							// first time building
-							foreach ($css as $url)
-							{
-								$_css = $this->get_source($url, $place);
-								$_css = $this->_prepare($_css, 'css');
-
-								// look if file name has 'min' suffix to avoid extra minification
-								if ($this->_config->css['min'] AND
-								    (! mb_strpos($url, '.min.') AND
-								     ! mb_strpos($url, '.pack.') AND
-								     ! mb_strpos($url, '.packed.')))
-								{
-									$_css = $this->minify($_css);
-								}
-
-								$build_content .= $_css;
-							}
+							$build[$condition][] = $resource;
 						}
 
-						$this->save($this->cache_file($build_name), $build_content);
+						break;
+				}
+			}
+		}
+
+		if($inline_css)
+			$inline_css = $this->_prepare($inline_css, 'css');
+
+		if ( ! $this->_config->css['build'])
+		{
+			$css_links .= '<style type="text/css">' . trim($inline_css) . '</style>';
+		}
+		else
+		{
+			// If one file building of inline scripts is needed
+			if($inline_css)
+			{
+				$build_name = $this->_make_file_name($inline_css, 'inline', 'css');
+				if ( ! file_exists($this->cache_file($build_name)))
+				{
+					$this->save($this->cache_file($build_name), $inline_css);
+				}
+
+				$css_links .= $this->_get_link('css', $this->cache_url($build_name));
+			}
+
+			foreach ($build as $condition => $css_link_arr)
+			{
+				$build_content = '';
+				$build_name = $this->_make_file_name($css_link_arr, $condition, 'css');
+
+				// Checking Cache file TTL
+//				$this->_cache_ttl_check($build_name);
+
+				if ( ! file_exists($this->cache_file($build_name)))
+				{
+					// first time building
+					foreach ($css_link_arr as $url)
+					{
+						$_css = $this->get_source($url);
+						$_css = $this->_prepare($_css, 'css');
+
+						// look if file name has 'min' suffix to avoid extra minification
+						if ($this->_config->css['min'] AND
+							(! mb_strpos($url, '.min.') AND
+							 ! mb_strpos($url, '.pack.') AND
+							 ! mb_strpos($url, '.packed.')))
+						{
+							$_css = $this->minify($_css);
+						}
+
+						$build_content .= $_css;
 					}
 
-					$css_code .= $this->_get_link('css', $this->cache_url($build_name), $condition);
+					$this->save($this->cache_file($build_name), $build_content);
 				}
+
+				$css_links .= $this->_get_link('css', $this->cache_url($build_name), $condition);
 			}
 		}
 
 		Profiler::stop($benchmark);
-		return $css_code;
-	}
-
-	/**
-	 * Loads library from CDN
-	 *
-	 * @return null|string
-	 */
-	public function load_library()
-	{
-		$anchors = NULL;
-
-		foreach(Arr::get($this->_css, 'cdn', array()) as $href)
-		{
-			$anchors = HTML::script($href);
-		}
-
-		return $anchors;
+		return $css_links;
 	}
 
 } // End Kohana_StaticCss

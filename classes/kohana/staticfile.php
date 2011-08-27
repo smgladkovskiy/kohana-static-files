@@ -19,22 +19,14 @@ class Kohana_StaticFile {
 	 *
 	 * @var array
 	 */
-	protected $_js = array(
-		'docroot' => array(),
-		'modpath' => array(),
-		'inline' => array(),
-	);
+	protected $_js = array();
 
 	/**
 	 * CSS links and files container
 	 *
 	 * @var array
 	 */
-	protected $_css = array(
-		'docroot' => array(),
-		'modpath' => array(),
-		'inline' => array(),
-	);
+	protected $_css = array();
 
 	/**
 	 * Class constructor
@@ -73,19 +65,9 @@ class Kohana_StaticFile {
 		fclose($f);
 	}
 
-	public function get_source($url, $place = 'docroot')
+	public function get_source($url)
 	{
-		$file_path = NULL;
-		switch($place)
-		{
-			case 'docroot':
-				$file_path = DOCROOT . str_replace('/', DIRECTORY_SEPARATOR, $url);
-				break;
-			case 'modpath':
-				$pathinfo = pathinfo(trim(str_replace('/', DIRECTORY_SEPARATOR,  str_replace('media', '', $url)), DIRECTORY_SEPARATOR));
-				$file_path = Kohana::find_file('media', $pathinfo['dirname'].DIRECTORY_SEPARATOR.$pathinfo['filename'], $pathinfo['extension']);
-				break;
-		}
+		$file_path = DOCROOT . str_replace('/', DIRECTORY_SEPARATOR, $url);
 
 		return ($file_path) ? file_get_contents($file_path) : NULL;
 	}
@@ -130,6 +112,7 @@ class Kohana_StaticFile {
 	{
 		return $this->load_library() . "\n" . $this->get('modpath') . "\n" .$this->get('docroot') . "\n" .  $this->get('inline');
 	}
+
 
 	/**
 	 * Adds js or css file to a js or css container
@@ -179,8 +162,7 @@ class Kohana_StaticFile {
 	protected function _add_as_docroot($type, $href, $condition = NULL)
 	{
 		$container = '_'.$type;
-		if( ! in_array($href, array_values(Arr::get($this->{$container}['docroot'], $condition, array()))))
-			$this->{$container}['docroot'][$condition][] = $href;
+		$this->{$container}[$condition][] = array($href => 'docroot');
 	}
 
 	/**
@@ -194,7 +176,7 @@ class Kohana_StaticFile {
 	protected function _add_as_modpath($type, $href, $condition = NULL)
 	{
 		$container = '_'.$type;
-		$this->{$container}['modpath'][$condition][] = $href;
+		$this->{$container}[$condition][] = array($href => 'modpath');
 	}
 
 	/**
@@ -214,18 +196,18 @@ class Kohana_StaticFile {
 
 		if ($id !== NULL)
 		{
-			$this->{$container}['inline'][$condition][$id] = $code;
+			$this->{$container}[$condition][$id] = array($code => 'inline');
 		}
 		else
 		{
-			$this->{$container}['inline'][$condition][] = $code;
+			$this->{$container}[$condition][] = array($code => 'inline');
 		}
 	}
 
-	protected function _add_as_cdn($type, $href)
+	protected function _add_as_cdn($type, $href, $condition = NULL)
 	{
 		$container = '_'.$type;
-		$this->{$container}['cdn'][] = $href;
+		$this->{$container}[$condition][] = array($href => 'cdn');
 	}
 
 	/**
@@ -292,11 +274,15 @@ class Kohana_StaticFile {
 	 * @param  string      $type (css|js)
 	 * @return string
 	 */
-	protected function _make_file_name(array $file_array, $condition_prefix = NULL, $type)
+	protected function _make_file_name($files, $condition_prefix = NULL, $type)
 	{
+		$hash = $files;
+		if(is_array($files))
+			$hash = serialize($files);
+
 		$condition_prefix = strtolower(preg_replace('/[^A-Za-z0-9_\-]/', '-', $condition_prefix));
 		$condition_prefix = $condition_prefix ? ($condition_prefix . '/') : '';
-		$file_name        = md5($this->_config->host . serialize($file_array));
+		$file_name        = md5($this->_config->host . $hash);
 
 		return $type . '/'
 			 . $condition_prefix
@@ -314,10 +300,13 @@ class Kohana_StaticFile {
 	protected function _cache_ttl_check($build_name)
 	{
 		if(file_exists($this->cache_file($build_name))
-		   AND (filemtime($this->cache_file($build_name)) + $this->_config->cache_reset_interval) < time())
+		   AND (filectime($this->cache_file($build_name)) + $this->_config->cache_reset_interval) < time())
 		{
 			$this->_cache_reset();
+			return FALSE;
 		}
+
+		return TRUE;
 	}
 
 	/**
@@ -336,31 +325,40 @@ class Kohana_StaticFile {
 		}
 	}
 
-	public function _move_to_docroot($files)
+	protected function _move_to_docroot_cache($file)
 	{
 		$docroot_tmp_path = DOCROOT.$this->_config->temp_docroot_path;
 
 		if( ! file_exists($docroot_tmp_path))
-			mkdir($docroot_tmp_path, NULL, TRUE);
+			mkdir($docroot_tmp_path, 0755, TRUE);
 
-		foreach($files as $files_array)
+		$file = pathinfo($file);
+		$file_path = Kohana::find_file('media', $file['dirname'].DIRECTORY_SEPARATOR.$file['filename'], $file['extension']);
+		$docroot_tmp_path_file = $docroot_tmp_path.DIRECTORY_SEPARATOR.$file['dirname'].DIRECTORY_SEPARATOR;
+		$docroot_file_path = $docroot_tmp_path_file.$file['basename'];
+
+		if( ! file_exists($docroot_tmp_path_file))
+			mkdir($docroot_tmp_path_file, NULL, TRUE);
+
+		if($file_path AND ( ! file_exists($docroot_file_path) OR filectime($docroot_file_path) > filectime($file_path)))
 		{
-			foreach($files_array as $file)
-			{
-				$file = pathinfo($file);
-				$file_path = Kohana::find_file('media', $file['dirname'].DIRECTORY_SEPARATOR.$file['filename'], $file['extension']);
-				$docroot_tmp_path_file = $docroot_tmp_path.DIRECTORY_SEPARATOR.$file['dirname'].DIRECTORY_SEPARATOR;
-				$docroot_file_path = $docroot_tmp_path_file.$file['basename'];
-
-				if( ! file_exists($docroot_tmp_path_file))
-					mkdir($docroot_tmp_path_file, NULL, TRUE);
-
-				if($file_path AND ( ! file_exists($docroot_file_path) OR filectime($docroot_file_path) > filectime($file_path)))
-				{
-					copy($file_path, $docroot_file_path);
-				}
-			}
+			copy($file_path, $docroot_file_path);
 		}
 	}
 
+	protected function _start_benchmark($type)
+	{
+		$container = '_'.$type;
+		$class = 'StaticFiles';
+
+		$benchmark = Profiler::start($class, 'loading '.$type);
+
+		if ( ! count($this->{$container}))
+		{
+			Profiler::stop($benchmark);
+			return NULL;
+		}
+
+		return $benchmark;
+	}
 } // End Kohana_StaticFile

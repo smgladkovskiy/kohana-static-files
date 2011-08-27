@@ -51,5 +51,6 @@ class File extends Kohana_File {
 				}
 			}
 		}
+		Kohana::$log->add(Log::INFO, 'Cache directory '.$dir_name.' was cleared due to TTL expiration');
 	}
 }

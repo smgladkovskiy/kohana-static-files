@@ -1,7 +1,10 @@
 <?php defined('SYSPATH') or die('No direct access allowed.');
 
 /**
- * @uses JSMin
+ * Treating javascript files and script strings
+ *
+ * @todo    make TTL checking of build files
+ * @uses    JSMin
  * @package Kohana-static-files
  * @author  Berdnikov Alexey <aberdnikov@gmail.com>
  * @author  Sergei Gladkovskiy <smgladkovskiy@gmail.com>
@@ -36,6 +39,7 @@ class Kohana_StaticJs extends StaticFile {
 	/**
 	 * Adding script from a docroot
 	 *
+	 * @chainable
 	 * @param  string      $href
 	 * @param  string|null $condition
 	 * @return StaticJs
@@ -43,13 +47,13 @@ class Kohana_StaticJs extends StaticFile {
 	public function add($href, $condition = NULL)
 	{
 		$this->_add_as_docroot('js', $href, $condition);
-
 		return $this;
 	}
 
 	/**
 	 * Adding inline script
 	 *
+	 * @chainable
 	 * @param  string      $js
 	 * @param  string|null $condition
 	 * @param  string|null $id
@@ -64,6 +68,7 @@ class Kohana_StaticJs extends StaticFile {
 	/**
 	 * Adding script from a modules path (media folder in the module)
 	 *
+	 * @chainable
 	 * @param  string      $href
 	 * @param  string|null $condition
 	 * @return StaticJs
@@ -77,6 +82,7 @@ class Kohana_StaticJs extends StaticFile {
 	/**
 	 * Adding script from a CDN
 	 *
+	 * @chainable
 	 * @param  string      $href
 	 * @param  string|null $condition
 	 * @return StaticJs
@@ -87,6 +93,11 @@ class Kohana_StaticJs extends StaticFile {
 		return $this;
 	}
 
+	/**
+	 * Getting all scripts that was added earlier
+	 *
+	 * @return null|string
+	 */
 	public function get_all()
 	{
 		$benchmark = $this->_start_benchmark('js');

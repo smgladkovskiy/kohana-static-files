@@ -123,12 +123,18 @@ class Kohana_StaticCss extends StaticFile {
 				switch($destination)
 				{
 					case 'inline':
-						$css_link_arr = NULL;
+						$inline_css .= $resource;
 						if ($this->_config->css['min'])
 						{
-							$css_link_arr =  $this->minify($resource);
+							$inline_css =  $this->minify($inline_css);
 						}
-						$inline_css .= $css_link_arr;
+
+						$inline_css = $this->_prepare($inline_css, 'css');
+
+						if ( ! $this->_config->css['build'])
+						{
+							$css_links .= '<style type="text/css">' . trim($inline_css) . '</style>';
+						}
 						break;
 					case 'docroot':
 					case 'modpath':
@@ -153,60 +159,50 @@ class Kohana_StaticCss extends StaticFile {
 			}
 		}
 
+		// If one file building of inline scripts is needed
 		if($inline_css)
-			$inline_css = $this->_prepare($inline_css, 'css');
-
-		if ( ! $this->_config->css['build'])
 		{
-			$css_links .= '<style type="text/css">' . trim($inline_css) . '</style>';
-		}
-		else
-		{
-			// If one file building of inline scripts is needed
-			if($inline_css)
+			$build_name = $this->_make_file_name($inline_css, 'inline', 'css');
+			if ( ! file_exists($this->cache_file($build_name)))
 			{
-				$build_name = $this->_make_file_name($inline_css, 'inline', 'css');
-				if ( ! file_exists($this->cache_file($build_name)))
-				{
-					$this->save($this->cache_file($build_name), $inline_css);
-				}
-
-				$css_links .= $this->_get_link('css', $this->cache_url($build_name));
+				$this->save($this->cache_file($build_name), $inline_css);
 			}
 
-			foreach ($build as $condition => $css_link_arr)
-			{
-				$build_content = '';
-				$build_name = $this->_make_file_name($css_link_arr, $condition, 'css');
+			$css_links .= $this->_get_link('css', $this->cache_url($build_name));
+		}
 
-				// Checking Cache file TTL
+		foreach ($build as $condition => $css_link_arr)
+		{
+			$build_content = '';
+			$build_name = $this->_make_file_name($css_link_arr, $condition, 'css');
+
+			// Checking Cache file TTL
 //				$this->_cache_ttl_check($build_name);
 
-				if ( ! file_exists($this->cache_file($build_name)))
+			if ( ! file_exists($this->cache_file($build_name)))
+			{
+				// first time building
+				foreach ($css_link_arr as $url)
 				{
-					// first time building
-					foreach ($css_link_arr as $url)
+					$_css = $this->get_source($url);
+					$_css = $this->_prepare($_css, 'css');
+
+					// look if file name has 'min' suffix to avoid extra minification
+					if ($this->_config->css['min'] AND
+						(! mb_strpos($url, '.min.') AND
+						 ! mb_strpos($url, '.pack.') AND
+						 ! mb_strpos($url, '.packed.')))
 					{
-						$_css = $this->get_source($url);
-						$_css = $this->_prepare($_css, 'css');
-
-						// look if file name has 'min' suffix to avoid extra minification
-						if ($this->_config->css['min'] AND
-							(! mb_strpos($url, '.min.') AND
-							 ! mb_strpos($url, '.pack.') AND
-							 ! mb_strpos($url, '.packed.')))
-						{
-							$_css = $this->minify($_css);
-						}
-
-						$build_content .= $_css;
+						$_css = $this->minify($_css);
 					}
 
-					$this->save($this->cache_file($build_name), $build_content);
+					$build_content .= $_css;
 				}
 
-				$css_links .= $this->_get_link('css', $this->cache_url($build_name), $condition);
+				$this->save($this->cache_file($build_name), $build_content);
 			}
+
+			$css_links .= $this->_get_link('css', $this->cache_url($build_name), $condition);
 		}
 
 		Profiler::stop($benchmark);

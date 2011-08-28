@@ -102,12 +102,18 @@ class Kohana_StaticJs extends StaticFile {
 				switch($destination)
 				{
 					case 'inline':
-						$js_link_arr = NULL;
+						$inline_js .= $resource;
 						if ($this->_config->js['min'])
 						{
-							$js_link_arr = JSMin::minify($resource);
+							$inline_js = JSMin::minify($inline_js);
 						}
-						$inline_js .= $js_link_arr;
+
+						$inline_js = $this->_prepare($inline_js, 'js');
+
+						if ( ! $this->_config->js['build'])
+						{
+							$js_links .= '<script language="JavaScript" type="text/javascript">' . trim($inline_js) . "</script>\n";
+						}
 						break;
 					case 'docroot':
 					case 'modpath':
@@ -132,59 +138,49 @@ class Kohana_StaticJs extends StaticFile {
 			}
 		}
 
+		// If one file building of inline scripts is needed
 		if($inline_js)
-			$inline_js = $this->_prepare($inline_js, 'js');
-
-		if ( ! $this->_config->js['build'])
 		{
-			$js_links .= '<script language="JavaScript" type="text/javascript">' . trim($inline_js) . '</script>';
-		}
-		else
-		{
-			// If one file building of inline scripts is needed
-			if($inline_js)
+			$build_name = $this->_make_file_name($inline_js, 'inline', 'js');
+			if ( ! file_exists($this->cache_file($build_name)))
 			{
-				$build_name = $this->_make_file_name($inline_js, 'inline', 'js');
-				if ( ! file_exists($this->cache_file($build_name)))
-				{
-					$this->save($this->cache_file($build_name), $inline_js);
-				}
-
-				$js_links .= $this->_get_link('js', $this->cache_url($build_name));
+				$this->save($this->cache_file($build_name), $inline_js);
 			}
 
-			foreach ($build as $condition => $js_link_arr)
-			{
-				$build_content = '';
-				$build_name = $this->_make_file_name($js_link_arr, $condition, 'js');
+			$js_links .= $this->_get_link('js', $this->cache_url($build_name));
+		}
 
-				// Checking Cache file TTL
+		foreach ($build as $condition => $js_link_arr)
+		{
+			$build_content = '';
+			$build_name = $this->_make_file_name($js_link_arr, $condition, 'js');
+
+			// Checking Cache file TTL
 //				$this->_cache_ttl_check($build_name);
 
-				if ( ! file_exists($this->cache_file($build_name)))
+			if ( ! file_exists($this->cache_file($build_name)))
+			{
+				// first time building
+				foreach ($js_link_arr as $url)
 				{
-					// first time building
-					foreach ($js_link_arr as $url)
+					$_js = $this->get_source($url);
+
+					// look if file name has 'min' suffix to avoid extra minification
+					if ($this->_config->js['min'] AND
+						(! mb_strpos($url, '.min.') AND
+						 ! mb_strpos($url, '.pack.') AND
+						 ! mb_strpos($url, '.packed.')))
 					{
-						$_js = $this->get_source($url);
-
-						// look if file name has 'min' suffix to avoid extra minification
-						if ($this->_config->js['min'] AND
-							(! mb_strpos($url, '.min.') AND
-							 ! mb_strpos($url, '.pack.') AND
-							 ! mb_strpos($url, '.packed.')))
-						{
-							$_js = JSMin::minify($_js);
-						}
-
-						$build_content .= $_js;
+						$_js = JSMin::minify($_js);
 					}
 
-					$this->save($this->cache_file($build_name), $build_content);
+					$build_content .= $_js;
 				}
 
-				$js_links .= $this->_get_link('js', $this->cache_url($build_name), $condition);
+				$this->save($this->cache_file($build_name), $build_content);
 			}
+
+			$js_links .= $this->_get_link('js', $this->cache_url($build_name), $condition);
 		}
 
 		Profiler::stop($benchmark);

@@ -6,11 +6,10 @@
 
 $config = Kohana::config('staticfiles');
 
-Route::set(
-   'static_files',
-   trim($config->url, '/').'/<file>',
-   array('file'=>'.*')
-)->defaults(array(
+Route::set('static_files', trim($config->url, '/').'/<file>', array(
+	'file'=>'.+'
+))
+->defaults(array(
 	'controller' => 'staticfiles',
 	'action' => 'index'
 	)

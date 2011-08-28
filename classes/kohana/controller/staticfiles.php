@@ -11,72 +11,39 @@
 abstract class Kohana_Controller_Staticfiles extends Controller {
 
 	/**
-	 * Static files deploying
+	 * Media files rendering
 	 *
-	 * @param  string $file
 	 * @return void
 	 */
-	public function action_index($file)
+	public function action_media()
 	{
-		$info = pathinfo($file);
+		// Generate and check the ETag for this file
+		$this->response->check_cache(sha1($this->request->uri()), $this->request);
 
-		if (($orig = self::static_original($file)))
-		{
-			$deploy = self::_static_deploy($file);
+		// Get the file path from the request
+		$file = $this->request->param('file');
 
-			// static file deploying
-			// Next request will take file rom the deploying place, not via PHP
-			copy($orig, $deploy);
+		// Find the file extension
+		$ext = pathinfo($file, PATHINFO_EXTENSION);
 
-			// Return file to a browser
-			$this->request->response()
-				->check_cache(sha1($this->request->uri()) . filemtime($orig), $this->request)
-				->body(file_get_contents($orig))
-				->headers('last-modified', date('r', filemtime($orig)))
-				->headers('content-type', File::mime_by_ext($info['extension']));
+		// Remove the extension from the filename
+		$file = substr($file, 0, -(strlen($ext) + 1));
+		if($file = Kohana::find_file('media', $file, $ext)) {
+			// Send the file content as the response
+			$this->response->body(file_get_contents($file));
 		}
 		else
 		{
 			// Return a 404 status
-			$this->request->response()->status(404);
+			$this->response->status(404);
 		}
-	}
 
-	/**
-	 * Searching original static file in static-files module directory
-	 *
-	 * @todo make search in different folders + exact folder, passed to a method
-	 * @param  string $file
-	 * @return string
-	 */
-	public static function static_original($file)
-	{
-		$info = pathinfo($file);
-		$dir  = ('.' != $info['dirname']) ? $info['dirname'] . '/' : '';
-
-		return Kohana::find_file('static-files', $dir . $info['filename'], $info['extension']);
-	}
-
-	/**
-	 * Deploying static file
-	 *
-	 * @static
-	 * @param  $file
-	 * @return string
-	 */
-	protected static function _static_deploy($file)
-	{
-		$info   = pathinfo($file);
-		$dir    = ('.' != $info['dirname']) ? $info['dirname'] . '/' : '';
-		$deploy = Kohana::config('staticfiles.path')
-		        . Kohana::config('staticfiles.url') . $dir
-		        . $info['filename'] . '.'
-		        . $info['extension'];
-
-		if (!file_exists(dirname($deploy)))
-			mkdir(dirname($deploy), 0777, true);
-
-		return $deploy;
+		// Set the proper headers to allow caching
+		$this->response
+			->headers('Content-Type', File::mime_by_ext($ext))
+			->headers('Content-Length', '' . filesize($file))
+			->headers('Last-Modified', date('r', filemtime($file)))
+			->send_headers();
 	}
 
 } // End Kohana_Controller_Staticfiles

@@ -37,5 +37,5 @@ return array(
     'cdn' => 'http://someCDN.com/',
 
 	// Cache reset interval
-	'cache_reset_interval' => 12*60*60, // 12 hours
+	'cache_reset_interval' => 12*3600, // 12 hours
 );

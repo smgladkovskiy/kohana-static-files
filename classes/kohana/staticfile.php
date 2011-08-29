@@ -104,54 +104,6 @@ class Kohana_StaticFile {
 	}
 
 	/**
-	 * Render all objects of a StaticFile class instance (js or css)
-	 *
-	 * @return string
-	 */
-	public function get_all()
-	{
-		return $this->load_library() . "\n" . $this->get('modpath') . "\n" .$this->get('docroot') . "\n" .  $this->get('inline');
-	}
-
-
-	/**
-	 * Adds js or css file to a js or css container
-	 * $place can be:
-	 *    - 'docroot' (default)
-	 *    - 'modpath' (try to search in modules)
-	 *    - 'inline'
-	 *    - 'cdn'
-	 *
-	 * @todo work with cdn
-	 * @param  string      $type
-	 * @param  string      $href
-	 * @param  string|null $condition
-	 * @param  string      $place
-	 * @param  int|null    $id
-	 * @return void
-	 */
-	protected function _add($type, $href, $condition = NULL, $place = 'docroot', $id = NULL)
-	{
-		$href = trim($href, '/');
-
-		switch($place)
-		{
-			case 'docroot':
-				$this->_add_as_docroot($type, $href, $condition);
-				break;
-			case 'modpath':
-				$this->_add_as_modpath($type, $href, $condition);
-				break;
-			case 'inline':
-				$this->_add_as_inline($type, $href, $condition, $id);
-				break;
-			case 'cdn':
-				$this->_add_as_cdn($type, $href);
-				break;
-		}
-	}
-
-	/**
 	 * Adds $type files that can be found in $type directory in DOCROOT to $type container
 	 *
 	 * @param string      $type
@@ -223,7 +175,7 @@ class Kohana_StaticFile {
 		$href = trim($href, '/');
 		if (mb_substr($href, 0, 4) != 'http')
 		{
-			$js = ($this->_config->host == '/') ? $href : $this->_config->host . $href;
+			$href = ($this->_config->host == '/') ? $href : $this->_config->host . $href;
 		}
 
 		$anchor = NULL;
@@ -266,12 +218,35 @@ class Kohana_StaticFile {
 		return trim($code);
 	}
 
+
+
+	/**
+	 * Minifies css file content
+	 *
+	 * @param  string $v
+	 * @return string
+	 */
+	protected function minify($v)
+	{
+		$v       = trim($v);
+		$v       = str_replace("\r\n", "\n", $v);
+		$search  = array("/\/\*[\d\D]*?\*\/|\t+/", "/\s+/", "/\}\s+/");
+		$replace = array(null, " ", "}\n");
+		$v       = preg_replace($search, $replace, $v);
+		$search  = array("/\\;\s/", "/\s+\{\\s+/", "/\\:\s+\\#/", "/,\s+/i", "/\\:\s+\\\'/i", "/\\:\s+([0-9]+|[A-F]+)/i");
+		$replace = array(";", "{", ":#", ",", ":\'", ":$1");
+		$v       = preg_replace($search, $replace, $v);
+		$v       = str_replace("\n", null, $v);
+
+		return $v;
+	}
+
 	/**
 	 * Generates unique file name for a build file
 	 *
-	 * @param  array       $file_array
-	 * @param  string|null $condition_prefix
-	 * @param  string      $type (css|js)
+	 * @param  array|string $files
+	 * @param  string|null  $condition_prefix
+	 * @param  string       $type
 	 * @return string
 	 */
 	protected function _make_file_name($files, $condition_prefix = NULL, $type)
@@ -295,7 +270,7 @@ class Kohana_StaticFile {
 	 * Clearing cache if expires its time to live
 	 *
 	 * @param  $build_name
-	 * @return void
+	 * @return bool
 	 */
 	protected function _cache_ttl_check($build_name)
 	{
@@ -325,6 +300,12 @@ class Kohana_StaticFile {
 		}
 	}
 
+	/**
+	 * Copy file from modpath to docroot directory to access if from the outside
+	 *
+	 * @param  string $file
+	 * @return void
+	 */
 	protected function _move_to_docroot_cache($file)
 	{
 		$docroot_tmp_path = DOCROOT.$this->_config->temp_docroot_path;
@@ -338,7 +319,7 @@ class Kohana_StaticFile {
 		$docroot_file_path = $docroot_tmp_path_file.$file['basename'];
 
 		if( ! file_exists($docroot_tmp_path_file))
-			mkdir($docroot_tmp_path_file, NULL, TRUE);
+			mkdir($docroot_tmp_path_file, 0755, TRUE);
 
 		if($file_path AND ( ! file_exists($docroot_file_path) OR filectime($docroot_file_path) > filectime($file_path)))
 		{
@@ -346,6 +327,12 @@ class Kohana_StaticFile {
 		}
 	}
 
+	/**
+	 * Benchmark initialisation
+	 *
+	 * @param  string $type
+	 * @return null|string
+	 */
 	protected function _start_benchmark($type)
 	{
 		$container = '_'.$type;
@@ -361,4 +348,5 @@ class Kohana_StaticFile {
 
 		return $benchmark;
 	}
+	
 } // End Kohana_StaticFile

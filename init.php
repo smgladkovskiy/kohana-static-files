@@ -4,7 +4,7 @@
  * @package Kohana-static-files
  */
 
-$config = Kohana::config('staticfiles');
+$config = Kohana::$config->load('staticfiles');
 
 Route::set('static_files', trim($config->url, '/').'/<file>', array(
 	'file'=>'.+'

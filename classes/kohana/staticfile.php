@@ -33,7 +33,7 @@ class Kohana_StaticFile {
 	 */
 	public function __construct()
 	{
-		$this->_config = Kohana::config('staticfiles');
+		$this->_config = Kohana::$config->load('staticfiles');
 	}
 
 	/**
@@ -348,5 +348,5 @@ class Kohana_StaticFile {
 
 		return $benchmark;
 	}
-	
+
 } // End Kohana_StaticFile

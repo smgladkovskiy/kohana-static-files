@@ -33,7 +33,7 @@ class Kohana_StaticFile {
 	 */
 	public function __construct()
 	{
-		$this->_config = Kohana::$config->load('staticfiles');
+		$this->_config = Kohana::$config->load('static-files');
 	}
 
 	/**

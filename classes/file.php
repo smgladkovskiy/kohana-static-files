@@ -1,5 +1,8 @@
 <?php defined('SYSPATH') or die('No direct script access.');
 
+/**
+ * @package Kohana-static-files
+ */
 class File extends Kohana_File {
 
 	/**
@@ -48,5 +51,6 @@ class File extends Kohana_File {
 				}
 			}
 		}
+		Kohana::$log->add(Log::INFO, 'Cache directory '.$dir_name.' was cleared due to TTL expiration');
 	}
 }

@@ -4,7 +4,7 @@
  * @package Kohana-static-files
  */
 
-$config = Kohana::$config->load('staticfiles');
+$config = Kohana::$config->load('static-files');
 
 Route::set('static_files', trim($config->url, '/').'/<file>', array(
 	'file'=>'.+'
@@ -15,6 +15,6 @@ Route::set('static_files', trim($config->url, '/').'/<file>', array(
 	)
 );
 
-require_once Kohana::find_file('vendor', 'jsmin');
+require_once Kohana::find_file('vendor/jsmin', 'jsmin');
 
 define('STATICFILES_URL', $config->host . $config->url);

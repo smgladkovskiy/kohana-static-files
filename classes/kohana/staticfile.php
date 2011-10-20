@@ -28,6 +28,8 @@ class Kohana_StaticFile {
 	 */
 	protected $_css = array();
 
+	public static $_count = 0;
+
 	/**
 	 * Class constructor
 	 */
@@ -143,16 +145,16 @@ class Kohana_StaticFile {
 	protected function _add_as_inline($type, $code, $condition = NULL, $id = NULL)
 	{
 		$container = '_'.$type;
+		$uniq_id   = md5($code);
 
 		$code = $this->_prepare($code, $type);
-
 		if ($id !== NULL)
 		{
-			$this->{$container}[$condition][$id] = array($code => 'inline');
+			$this->{$container}[$condition][$uniq_id.$id] = array($code => 'inline');
 		}
 		else
 		{
-			$this->{$container}[$condition][] = array($code => 'inline');
+			$this->{$container}[$condition][$uniq_id] = array($code => 'inline');
 		}
 	}
 

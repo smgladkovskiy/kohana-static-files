@@ -113,17 +113,6 @@ class Kohana_StaticCss extends StaticFile {
 				{
 					case 'inline':
 						$inline_css .= $resource;
-						if ($this->_config->css['min'])
-						{
-							$inline_css =  $this->minify($inline_css);
-						}
-
-						$inline_css = $this->_prepare($inline_css, 'css');
-
-						if ( ! $this->_config->css['build'])
-						{
-							$css_links .= '<style type="text/css">' . trim($inline_css) . '</style>';
-						}
 						break;
 					case 'docroot':
 					case 'modpath':
@@ -148,16 +137,16 @@ class Kohana_StaticCss extends StaticFile {
 			}
 		}
 
-		// If one file building of inline scripts is needed
-		if($inline_css)
+	    if ($this->_config->css['min'])
 		{
-			$build_name = $this->_make_file_name($inline_css, 'inline', 'css');
-			if ( ! file_exists($this->cache_file($build_name)))
-			{
-				$this->save($this->cache_file($build_name), $inline_css);
-			}
+			$inline_css =  $this->minify($inline_css);
+		}
 
-			$css_links .= $this->_get_link('css', $this->cache_url($build_name));
+		$inline_css = $this->_prepare($inline_css, 'css');
+
+		if ( ! $this->_config->css['build'])
+		{
+			$css_links .= '<style type="text/css">' . trim($inline_css) . '</style>';
 		}
 
 		foreach ($build as $condition => $css_link_arr)
@@ -192,6 +181,18 @@ class Kohana_StaticCss extends StaticFile {
 			}
 
 			$css_links .= $this->_get_link('css', $this->cache_url($build_name), $condition);
+		}
+
+		// If one file building of inline scripts is needed
+		if($inline_css AND $this->_config->css['build'])
+		{
+			$build_name = $this->_make_file_name($inline_css, 'inline', 'css');
+			if ( ! file_exists($this->cache_file($build_name)))
+			{
+				$this->save($this->cache_file($build_name), $inline_css);
+			}
+
+			$css_links .= $this->_get_link('css', $this->cache_url($build_name));
 		}
 
 		Profiler::stop($benchmark);

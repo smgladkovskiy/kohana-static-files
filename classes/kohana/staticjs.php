@@ -114,17 +114,6 @@ class Kohana_StaticJs extends StaticFile {
 				{
 					case 'inline':
 						$inline_js .= $resource;
-						if ($this->_config->js['min'])
-						{
-							$inline_js = JSMin::minify($inline_js);
-						}
-
-						$inline_js = $this->_prepare($inline_js, 'js');
-
-						if ( ! $this->_config->js['build'])
-						{
-							$js_links .= '<script language="JavaScript" type="text/javascript">' . trim($inline_js) . "</script>\n";
-						}
 						break;
 					case 'docroot':
 					case 'modpath':
@@ -149,16 +138,16 @@ class Kohana_StaticJs extends StaticFile {
 			}
 		}
 
-		// If one file building of inline scripts is needed
-		if($inline_js)
+		if ($this->_config->js['min'])
 		{
-			$build_name = $this->_make_file_name($inline_js, 'inline', 'js');
-			if ( ! file_exists($this->cache_file($build_name)))
-			{
-				$this->save($this->cache_file($build_name), $inline_js);
-			}
+			$inline_js = JSMin::minify($inline_js);
+		}
 
-			$js_links .= $this->_get_link('js', $this->cache_url($build_name));
+		$inline_js = $this->_prepare($inline_js, 'js');
+
+		if ( ! $this->_config->js['build'])
+		{
+			$js_links .= '<script language="JavaScript" type="text/javascript">' . trim($inline_js) . "</script>\n";
 		}
 
 		foreach ($build as $condition => $js_link_arr)
@@ -194,7 +183,20 @@ class Kohana_StaticJs extends StaticFile {
 			$js_links .= $this->_get_link('js', $this->cache_url($build_name), $condition);
 		}
 
+		// If one file building of inline scripts is needed
+		if($inline_js AND $this->_config->js['build'])
+		{
+			$build_name = $this->_make_file_name($inline_js, 'inline', 'js');
+			if ( ! file_exists($this->cache_file($build_name)))
+			{
+				$this->save($this->cache_file($build_name), $inline_js);
+			}
+
+			$js_links .= $this->_get_link('js', $this->cache_url($build_name));
+		}
+
 		Profiler::stop($benchmark);
+		self::$_count++;
 		return $js_links;
 	}
 

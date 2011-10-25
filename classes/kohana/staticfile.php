@@ -253,9 +253,13 @@ class Kohana_StaticFile {
 	 */
 	protected function _make_file_name($files, $condition_prefix = NULL, $type)
 	{
-		$hash = $files;
-		if(is_array($files))
-			$hash = serialize($files);
+		$files = (array) $files;
+		$files = array_unique($files);
+		$hash  = null;
+
+		foreach($files as $file) {
+			$hash .= serialize(realpath($file));
+		}
 
 		$condition_prefix = strtolower(preg_replace('/[^A-Za-z0-9_\-]/', '-', $condition_prefix));
 		$condition_prefix = $condition_prefix ? ($condition_prefix . '/') : '';

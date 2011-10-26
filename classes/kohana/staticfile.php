@@ -71,7 +71,13 @@ class Kohana_StaticFile {
 	{
 		$file_path = DOCROOT . str_replace('/', DIRECTORY_SEPARATOR, $url);
 
-		return ($file_path) ? file_get_contents($file_path) : NULL;
+		if ($file_path)
+			$content = file_get_contents($file_path);
+		if ($content === FALSE)
+		{
+			throw new Kohana_Exception('Unable to read file: :file', array(':file' => $file_path));
+		}
+		return $content;
 	}
 
 	/**
@@ -102,7 +108,7 @@ class Kohana_StaticFile {
 	 */
 	public function cache_url($file_name)
 	{
-		return $this->_config->cache . $file_name;
+		return $this->_config->url . $file_name;
 	}
 
 	/**
@@ -258,7 +264,7 @@ class Kohana_StaticFile {
 		$hash  = null;
 
 		foreach($files as $file) {
-			$hash .= serialize(realpath($file));
+			$hash .= serialize(realpath(DOCROOT.$file));
 		}
 
 		$condition_prefix = strtolower(preg_replace('/[^A-Za-z0-9_\-]/', '-', $condition_prefix));

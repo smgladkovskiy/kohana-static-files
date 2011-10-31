@@ -65,51 +65,53 @@ class Kohana_StaticCss extends StaticFile {
 	 * @return void
 	 */
 	public function _add_as_docroot($type, $href, $condition = NULL) {
-		// Merge @import'ed css in one file. Recursively.
-		$file_path = DOCROOT.$href;
-		if (is_readable($file_path))
+		if ($this->_config->css['build'])
 		{
-			$v = file_get_contents($file_path);
-		}
-		else
-		{
-			throw new Kohana_Exception('Unable to read file: :file', array(':file' => $file_path));
-		}
-
-		/**
-		 * @todo: Add check for in-comment place
-		 */
-//		$pattern = '/\@import\s+(?:url\s*\()?\s*[\"\\\']{1}([^(?:\.css)]+\.css)\s*[\"\\\']{1}\s*\)?\s*;/';
-		$pattern = '/\@import\s+(?:url\s*\()?\s*["\']{1}([a-zA-Z0-9'."\\\\\/".']+\.css)["\']{1}\s*\)?\s*;/';
-		$matches = array();
-		$dir     = DOCROOT.dirname($href).DIRECTORY_SEPARATOR;
-		$i       = 0;
-
-		while (preg_match($pattern, $v))
-		{
-			preg_match_all($pattern, $v, $matches);
-			if ( ! empty($matches[1]))
+			// Merge @import'ed css in one file. Recursively.
+			$file_path = DOCROOT.$href;
+			if (is_readable($file_path))
 			{
-				foreach($matches[1] as $css)
+				$v = file_get_contents($file_path);
+			}
+			else
+			{
+				throw new Kohana_Exception('Unable to read file: :file', array(':file' => $file_path));
+			}
+
+			/**
+			 * @todo: Add check for in-comment place
+			 */
+			$pattern = '/\@import\s+(?:url\s*\()?\s*["\']{1}([a-zA-Z0-9'."\\\\\/".']+\.css)["\']{1}\s*\)?\s*;/';
+			$matches = array();
+			$dir     = DOCROOT.dirname($href).DIRECTORY_SEPARATOR;
+			$i       = 0;
+
+			while (preg_match($pattern, $v))
+			{
+				preg_match_all($pattern, $v, $matches);
+				if ( ! empty($matches[1]))
 				{
-					if ($i>20)
+					foreach($matches[1] as $css)
 					{
-						throw new Kohana_Exception('You have more than 20 levels in css @import files or recursive definition. Check your css files.');
-					}
-					elseif (is_readable($dir.$css))
-					{
-						$replace = file_get_contents($dir.$css);
-						$v = preg_replace('/\@import[^;]+'.$css.'[^;]+;/', $replace, $v);
-					}
-					else
-					{
-						throw new Kohana_Exception('Can\'t read css file: :css_filename.', array(':css_filename' => $dir.$css), Kohana_Exception::$php_errors[E_ERROR]);
+						if ($i>20)
+						{
+							throw new Kohana_Exception('You have more than 20 levels in css @import files or recursive definition. Check your css files.');
+						}
+						elseif (is_readable($dir.$css))
+						{
+							$replace = file_get_contents($dir.$css);
+							$v = preg_replace('/\@import[^;]+'.$css.'[^;]+;/', $replace, $v);
+						}
+						else
+						{
+							throw new Kohana_Exception('Can\'t read css file: :css_filename.', array(':css_filename' => $dir.$css), Kohana_Exception::$php_errors[E_ERROR]);
+						}
 					}
 				}
+				$i++;
 			}
-			$i++;
+			$this->_merged_css[$href] = $v;
 		}
-		$this->_merged_css[$href] = $v;
 
 		parent::_add_as_docroot($type, $href, $condition);
 	}

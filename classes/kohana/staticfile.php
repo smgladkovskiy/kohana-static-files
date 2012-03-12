@@ -65,6 +65,7 @@ class Kohana_StaticFile {
 		fwrite($f, $data);
 
 		fclose($f);
+		chmod($file, '664');
 	}
 
 	public function get_source($url)
@@ -94,7 +95,7 @@ class Kohana_StaticFile {
 
 		if ( ! file_exists(dirname($cache_file)))
 		{
-			mkdir(dirname($cache_file), 0755, TRUE);
+			mkdir(dirname($cache_file), 0775, TRUE);
 		}
 
 		return $cache_file;

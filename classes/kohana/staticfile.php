@@ -65,7 +65,7 @@ class Kohana_StaticFile {
 		fwrite($f, $data);
 
 		fclose($f);
-		chmod($file, 0664);
+		chmod($file, 0666);
 	}
 
 	public function get_source($url)
@@ -97,7 +97,7 @@ class Kohana_StaticFile {
 		{
 			$umask = umask();
 			umask(0);
-			mkdir(dirname($cache_file), 0775, TRUE);
+			mkdir(dirname($cache_file), 0777, TRUE);
 			umask($umask);
 		}
 
@@ -327,7 +327,7 @@ class Kohana_StaticFile {
 		$docroot_tmp_path = DOCROOT.$this->_config->temp_docroot_path;
 
 		if( ! file_exists($docroot_tmp_path))
-			mkdir($docroot_tmp_path, 0775, TRUE);
+			mkdir($docroot_tmp_path, 0777, TRUE);
 
 		$file = pathinfo($file);
 		$file_path = Kohana::find_file('media', $file['dirname'].DIRECTORY_SEPARATOR.$file['filename'], $file['extension']);
@@ -335,7 +335,7 @@ class Kohana_StaticFile {
 		$docroot_file_path = $docroot_tmp_path_file.$file['basename'];
 
 		if( ! file_exists($docroot_tmp_path_file))
-			mkdir($docroot_tmp_path_file, 0775, TRUE);
+			mkdir($docroot_tmp_path_file, 0777, TRUE);
 
 		if($file_path AND ( ! file_exists($docroot_file_path) OR filectime($docroot_file_path) > filectime($file_path)))
 		{

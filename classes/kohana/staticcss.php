@@ -230,7 +230,7 @@ class Kohana_StaticCss extends StaticFile {
 				// first time building
 				foreach ($css_link_arr as $url)
 				{
-					$_css = $this->_merged_css[$url];
+					$_css = Arr::get($this->_merged_css, $url);
 					if (empty($_css))
 					{
 						$_css = $this->get_source($url);

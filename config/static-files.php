@@ -26,7 +26,7 @@ return array(
 
     // Path to copy static files that are not build in one file
 	'temp_docroot_path' => 'media/static/',
-    'url' => 'media/static/',
+    'url' => 'media/cache/',
 
     // Path to styles and scripts builds
     'cache' => 'media/cache/',

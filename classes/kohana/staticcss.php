@@ -137,7 +137,8 @@ class Kohana_StaticCss extends StaticFile {
 			}
 		}
 
-	    if ($this->_config->css['min'])
+		// If one file building of inline scripts is needed
+		if($this->_config->js['build'] AND $inline_css)
 		{
 			$inline_css =  $this->minify($inline_css);
 		}

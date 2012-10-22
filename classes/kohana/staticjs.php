@@ -138,7 +138,8 @@ class Kohana_StaticJs extends StaticFile {
 			}
 		}
 
-		if ($this->_config->js['min'])
+		// If one file building of inline scripts is needed
+		if($this->_config->js['build'] AND $inline_js)
 		{
 			$inline_js = JSMin::minify($inline_js);
 		}

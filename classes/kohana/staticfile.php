@@ -263,12 +263,22 @@ class Kohana_StaticFile {
 	 */
 	protected function _make_file_name($files, $condition_prefix = NULL, $type)
 	{
-		$files = (array) $files;
-		$files = array_unique($files);
-		$hash  = null;
+		$hash = NULL;
+		if(is_string($files))
+		{
+			// hash must depends on inline contend due it can be dynamic!
+			// @todo: find faster and lighter encoding algorithm if it possible
+			$hash = md5($files);
+		}
+		else
+		{
+			$files = (array) $files;
+			$files = array_unique($files);
+			$hash  = null;
 
-		foreach($files as $file) {
-			$hash .= serialize(realpath(DOCROOT.$file));
+			foreach($files as $file) {
+				$hash .= serialize(realpath(DOCROOT.$file));
+			}
 		}
 
 		$condition_prefix = strtolower(preg_replace('/[^A-Za-z0-9_\-]/', '-', $condition_prefix));

@@ -16,7 +16,14 @@ class Kohana_StaticCss extends StaticFile {
 	 * @static
 	 * @var array of StaticCss instances
 	 */
-	protected static $_instances = array();
+	protected static $_instances    = array();
+
+	/**
+	 * Array of merged and de-"@import"ed css
+	 *
+	 * @var array
+	 */
+	protected        $_merged_css = array();
 
 	/**
 	 * Class instance initiating
@@ -47,6 +54,66 @@ class Kohana_StaticCss extends StaticFile {
 	{
 		$this->_add_as_docroot('css', $href, $condition);
 		return $this;
+	}
+
+	/**
+	 * Overloaded version for recursive getting "@import" files
+	 *
+	 * @param string      $type
+	 * @param string      $href
+	 * @param string|null $condition
+	 * @return void
+	 */
+	public function _add_as_docroot($type, $href, $condition = NULL) {
+		if ($this->_config->css['build'])
+		{
+			// Merge @import'ed css in one file. Recursively.
+			$file_path = DOCROOT.$href;
+			if (is_readable($file_path))
+			{
+				$v = file_get_contents($file_path);
+			}
+			else
+			{
+				throw new Kohana_Exception('Unable to read file: :file', array(':file' => $file_path));
+			}
+
+			/**
+			 * @todo: Add check for in-comment place
+			 */
+			$pattern = '/\@import\s+(?:url\s*\()?\s*["\']{1}([a-zA-Z0-9'."\\\\\/".']+\.css)["\']{1}\s*\)?\s*;/';
+			$matches = array();
+			$dir     = DOCROOT.dirname($href).DIRECTORY_SEPARATOR;
+			$i       = 0;
+
+			while (preg_match($pattern, $v))
+			{
+				preg_match_all($pattern, $v, $matches);
+				if ( ! empty($matches[1]))
+				{
+					foreach($matches[1] as $css)
+					{
+						if ($i>20)
+						{
+							throw new Kohana_Exception('You have more than 20 levels in css @import files or recursive definition. Check your css files.');
+						}
+						elseif (is_readable($dir.$css))
+						{
+							$replace = file_get_contents($dir.$css);
+							$v = preg_replace('/\@import[^;]+'.$css.'[^;]+;/', $replace, $v);
+						}
+						else
+						{
+							throw new Kohana_Exception('Can\'t read css file: :css_filename.', array(':css_filename' => $dir.$css), Kohana_Exception::$php_errors[E_ERROR]);
+						}
+					}
+				}
+				$i++;
+			}
+			$this->_merged_css[$href] = $v;
+		}
+
+		parent::_add_as_docroot($type, $href, $condition);
 	}
 
 	/**
@@ -163,7 +230,11 @@ class Kohana_StaticCss extends StaticFile {
 				// first time building
 				foreach ($css_link_arr as $url)
 				{
-					$_css = $this->get_source($url);
+					$_css = $this->_merged_css[$url];
+					if (empty($_css))
+					{
+						$_css = $this->get_source($url);
+					}
 					$_css = $this->_prepare($_css, 'css');
 
 					// look if file name has 'min' suffix to avoid extra minification
@@ -180,7 +251,6 @@ class Kohana_StaticCss extends StaticFile {
 
 				$this->save($this->cache_file($build_name), $build_content);
 			}
-
 			$css_links .= $this->_get_link('css', $this->cache_url($build_name), $condition);
 		}
 
@@ -195,7 +265,6 @@ class Kohana_StaticCss extends StaticFile {
 
 			$css_links .= $this->_get_link('css', $this->cache_url($build_name));
 		}
-
 		Profiler::stop($benchmark);
 		return $css_links;
 	}

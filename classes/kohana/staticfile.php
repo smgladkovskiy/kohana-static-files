@@ -65,13 +65,20 @@ class Kohana_StaticFile {
 		fwrite($f, $data);
 
 		fclose($f);
+		chmod($file, 0666);
 	}
 
 	public function get_source($url)
 	{
 		$file_path = DOCROOT . str_replace('/', DIRECTORY_SEPARATOR, $url);
 
-		return ($file_path) ? file_get_contents($file_path) : NULL;
+		if ($file_path)
+			$content = file_get_contents($file_path);
+		if ($content === FALSE)
+		{
+			throw new Kohana_Exception('Unable to read file: :file', array(':file' => $file_path));
+		}
+		return $content;
 	}
 
 	/**
@@ -88,7 +95,10 @@ class Kohana_StaticFile {
 
 		if ( ! file_exists(dirname($cache_file)))
 		{
-			mkdir(dirname($cache_file), 0755, TRUE);
+			$umask = umask();
+			umask(0);
+			mkdir(dirname($cache_file), 0777, TRUE);
+			umask($umask);
 		}
 
 		return $cache_file;
@@ -102,7 +112,7 @@ class Kohana_StaticFile {
 	 */
 	public function cache_url($file_name)
 	{
-		return $this->_config->cache . $file_name;
+		return $this->_config->url . $file_name;
 	}
 
 	/**
@@ -253,9 +263,13 @@ class Kohana_StaticFile {
 	 */
 	protected function _make_file_name($files, $condition_prefix = NULL, $type)
 	{
-		$hash = $files;
-		if(is_array($files))
-			$hash = serialize($files);
+		$files = (array) $files;
+		$files = array_unique($files);
+		$hash  = null;
+
+		foreach($files as $file) {
+			$hash .= serialize(realpath(DOCROOT.$file));
+		}
 
 		$condition_prefix = strtolower(preg_replace('/[^A-Za-z0-9_\-]/', '-', $condition_prefix));
 		$condition_prefix = $condition_prefix ? ($condition_prefix . '/') : '';
@@ -313,7 +327,7 @@ class Kohana_StaticFile {
 		$docroot_tmp_path = DOCROOT.$this->_config->temp_docroot_path;
 
 		if( ! file_exists($docroot_tmp_path))
-			mkdir($docroot_tmp_path, 0755, TRUE);
+			mkdir($docroot_tmp_path, 0777, TRUE);
 
 		$file = pathinfo($file);
 		$file_path = Kohana::find_file('media', $file['dirname'].DIRECTORY_SEPARATOR.$file['filename'], $file['extension']);
@@ -321,7 +335,7 @@ class Kohana_StaticFile {
 		$docroot_file_path = $docroot_tmp_path_file.$file['basename'];
 
 		if( ! file_exists($docroot_tmp_path_file))
-			mkdir($docroot_tmp_path_file, 0755, TRUE);
+			mkdir($docroot_tmp_path_file, 0777, TRUE);
 
 		if($file_path AND ( ! file_exists($docroot_file_path) OR filectime($docroot_file_path) > filectime($file_path)))
 		{

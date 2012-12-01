@@ -179,7 +179,7 @@ class Kohana_StaticCss extends StaticFile {
 				switch($destination)
 				{
 					case 'inline':
-						$inline_css .= $resource;
+						$inline_css .= $resource; // @todo Preserve condition to a inline css
 						break;
 					case 'docroot':
 					case 'modpath':
@@ -212,7 +212,7 @@ class Kohana_StaticCss extends StaticFile {
 
 		$inline_css = $this->_prepare($inline_css, 'css');
 
-		if ( ! $this->_config->css['build'])
+		if ($inline_css AND ! $this->_config->css['build'])
 		{
 			$css_links .= '<style type="text/css">' . trim($inline_css) . '</style>';
 		}

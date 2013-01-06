@@ -194,7 +194,10 @@ class Kohana_StaticCss extends StaticFile {
 			$css_links .= $this->_get_link('css', $this->cache_url($build_name), $condition);
 		}
 
-		Profiler::stop($benchmark);
+		if ($benchmark)
+		{
+			Profiler::stop($benchmark);
+		}
 		return $css_links;
 	}
 

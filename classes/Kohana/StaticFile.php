@@ -366,7 +366,7 @@ class Kohana_StaticFile {
 
 		$benchmark = Profiler::start($class, 'loading '.$type);
 
-		if ( ! count($this->{$container}))
+		if ( ! count($this->{$container}) AND $benchmark)
 		{
 			Profiler::stop($benchmark);
 			return NULL;

@@ -18,7 +18,7 @@ abstract class Kohana_Controller_Staticfiles extends Controller {
 	public function action_media()
 	{
 		// Generate and check the ETag for this file
-		$this->response->check_cache(sha1($this->request->uri()), $this->request);
+		HTTP::check_cache($this->request, $this->response, sha1($this->request->uri()));
 
 		// Get the file path from the request
 		$file = $this->request->param('file');

@@ -196,8 +196,11 @@ class Kohana_StaticJs extends StaticFile {
 			$js_links .= $this->_get_link('js', $this->cache_url($build_name));
 		}
 
-		Profiler::stop($benchmark);
+		if ($benchmark)
+			Profiler::stop($benchmark);
+
 		self::$_count++;
+
 		return $js_links;
 	}
 

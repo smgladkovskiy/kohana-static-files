@@ -28,14 +28,9 @@ Route::set('static_files', trim($config->url, '/').'/<file>', array(
 	)
 );
 
-$vendor_lib = Kohana::find_file('vendor/jsmin', 'jsmin');
-if( ! $vendor_lib)
+if( ! class_exists('JSMin'))
 {
 	throw new Kohana_Exception("Unable to find library jsmin for module kohana-static-files, please check the vendor directory!");
-}
-else
-{
-	require_once Kohana::find_file('vendor/jsmin', 'jsmin');
 }
 
 define('STATICFILES_URL', $config->host . $config->url);

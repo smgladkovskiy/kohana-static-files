@@ -5,6 +5,7 @@
         "kohana/core": "~3.3.3",
         "rokerkony/jsmin-php": "dev-master"
     },
+    "require-dependencies":true,
     "license": "MIT",
     "type": "kohana-module",
     "authors": [

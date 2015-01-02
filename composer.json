@@ -1,22 +1,12 @@
 {
     "name": "smgladkovskiy/kohana-static-files",
     "description": "Kohana v3 module to work with static files (css and js) for client optimization.",
-    "require": {
-        "rokerkony/jsmin-php": "@dev"
-    },
-    "require-dependencies":true,
     "license": "MIT",
     "type": "kohana-module",
     "authors": [
         {
             "name": "SMGladkovskiy",
             "email": "smgladkovskiy@gmail.com"
-        }
-    ],
-    "repositories": [
-        {
-            "url": "https://github.com/rokerkony/jsmin-php.git",
-            "type": "git"
         }
     ],
     "extra": {

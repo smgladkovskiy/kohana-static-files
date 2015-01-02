@@ -2,7 +2,7 @@
     "name": "smgladkovskiy/kohana-static-files",
     "description": "Kohana v3 module to work with static files (css and js) for client optimization.",
     "require": {
-        "rokerkony/jsmin-php": "dev-master"
+        "rokerkony/jsmin-php": "@dev"
     },
     "require-dependencies":true,
     "license": "MIT",
@@ -23,6 +23,5 @@
         "installer-paths": {
             "vendor/{$vendor}/{$name}": ["type:kohana-module"]
         }
-    },
-    "minimum-stability" : "dev"
+    }
 }

@@ -55,6 +55,29 @@ class Kohana_StaticCss extends StaticFile {
 		$this->_add_as_docroot('css', $href, $condition);
 		return $this;
 	}
+	
+	/**
+	 * @param $href
+	 * @param null $condition
+	 * @return $this
+	 */
+	public function remove($href, $condition = null)
+	{
+		if (empty($this->_css[$condition])) {
+		    return;
+		}
+
+		$array =& $this->_css[$condition];
+		foreach ((array)$array as $key => $value) {
+		    if ($href === key($value)) {
+			unset($array[$key]);
+			break;
+		    }
+		}
+		unset($array);
+
+		return $this;
+	}
 
 	/**
 	 * Overloaded version for recursive getting "@import" files
